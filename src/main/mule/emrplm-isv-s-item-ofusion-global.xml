@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:sap="http://www.mulesoft.org/schema/mule/sap" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+
+	<import doc:name="Import" doc:id="ace9d78e-0164-4b88-b671-57c2d629aae5" file="clientLoggingPublisherFlow.xml" />
+	<import doc:name="Import" doc:id="500e1af1-8510-4193-be02-c0e7ed92f68b" file="global-exception-handling.xml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="e688fc4d-b2f6-4012-9dac-8f9b888759b8" key="${key}" file="properties/${env}.yaml">
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<http:request-config name="Request_to_Betsyd10" doc:name="HTTP Request configuration" doc:id="3c2aff7f-0cdf-4122-afc5-fc21e2200027" basePath="${secure::betsyRequest.basePath}">
+		<http:request-connection host="${secure::betsyRequest.host}" port="${secure::betsyRequest.port}" protocol="${secure::betsyRequest.protocol}" maxConnections="${secure::acknowledgeapi.maxConnections}" connectionIdleTimeout="${secure::betsyRequest.connectionTimeout}" responseBufferSize="${secure::betsyRequest.responseBufferSize}">
+			<http:authentication >
+				<http:basic-authentication username="${secure::betsyRequest.username}" password="${secure::betsyRequest.password}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<anypoint-mq:config name="Anypoint_MQ_Config" doc:name="Anypoint MQ Config" doc:id="9b9ff40e-8362-4b5f-9a7d-19ea6d1aa031" >
+		<anypoint-mq:connection url="${secure::anypointMQ.url}" clientId="${secure::anypointMQ.MQclientid}" clientSecret="${secure::anypointMQ.MQclientsecret}" />
+	</anypoint-mq:config>
+	<global-property doc:name="Global Property" doc:id="93726977-0fc5-4754-9e07-47faf0d2485f" name="env" value="dev" />
+	<global-property doc:name="Global Property" doc:id="82bd8826-0519-4488-9ce9-6bd343b6335e" name="key" value="Mulekey@678" />
+		<http:request-config name="emrplm-isv-s-item-ofusion-get" doc:name="" doc:id="9741df53-3e31-4ec0-953b-da846021af46" >
+		<http:request-connection host="${secure::GET.host}" port="${secure::GET.port}" maxConnections="${secure::GET.maxConnections}" connectionIdleTimeout="${secure::GET.connectionIdleTimeout}" protocol="${secure::GET.protocol}" responseBufferSize="${secure::GET.buffersize}">
+			<reconnection >
+				<reconnect frequency="${secure::retryStrategy.freq}" count="${secure::retryStrategy.retry}"/>
+			</reconnection>
+			<http:authentication >
+				<http:basic-authentication username="${secure::betsyRequest.username}" password="${secure::betsyRequest.password}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+</mule>

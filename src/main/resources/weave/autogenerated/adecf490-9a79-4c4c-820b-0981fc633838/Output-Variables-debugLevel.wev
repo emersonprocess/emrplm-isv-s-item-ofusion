@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_adecf490_9a79_4c4c_820b_0981fc633838_Output_Variables_debugLevel = Any
+

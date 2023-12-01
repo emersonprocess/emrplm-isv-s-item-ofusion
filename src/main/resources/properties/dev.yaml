@@ -1,0 +1,79 @@
+anypointMQ:
+ url: "https://mq-us-east-1.anypoint.mulesoft.com/api/v1"
+ MQclientid: "221755cecec3403ca0911664507620c1"
+ MQclientsecret: "0C1E1979abd24238B6F15d33635A27Ee"
+ queue: "dev.Q.asldpis.itemdetails.fusion"
+ connectionTimeout: "30000"
+ retryFrequency: "2000"
+ retryAttempts: "2"
+ preFetchSize: "1"
+ 
+betsyRequest:
+        host: "fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com"
+        port: "443"
+        path: "/fscmRestApi/resources/11.13.18.05/itemsV2" 
+        basePath: "/"
+        protocol: "HTTPS"
+        Method: "POST"
+        maxConnections: "-1"
+        connectionTimeout: "90000"
+        responseTimeout: "40000"
+        responseBufferSize: "1024"
+        username: "SCM00.INSTRUCTOR"
+        password: "spG*8A%8"
+        
+GET:
+  protocol: "HTTPS"
+  host: "cieq312.emrsn.org"
+  port: "8412"
+  connectionIdleTimeout: "60000"
+  memory: "512"
+  maxConnections: "-1"
+  userName: "TEST_BTAB"
+  password: "![dzDOCgfy2CcSDy0zc0jMkQ==]"
+  Url: "https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/latest/itemsV2" 
+  method: "GET"
+  successCodeValidator: "200,201"
+  retryCount: "2"
+  retryFreq: "2000"
+  responseTimeout: "60000"
+  buffersize: "1024"      
+  
+retryStrategy:
+  retry: "2"
+  freq: "120000"      
+ 
+
+    
+systemAPIStrategy: 
+    timeout: "90000"
+    retryFrequency: "2000"
+    retryAttempts: "2" 
+    responseValidator: "200,201,500..511"
+    memorySize: "512"    
+
+ 
+acknowledgeapi:
+  url: "http://3dxr21x-u1.emrsn.org:8086/acknowledgement/additem"
+  method: "POST"
+  host: "3dxr21x-u1"
+  port: "8086"
+  protocol: "HTTPS"                            
+  connectionIdleTimeout: "30000"               
+  memory: "512"                                
+  maxConnections: "-1"                         
+  buffersize: "1024"       
+
+app.version: "v1"
+error:
+ log:
+  level: "info"
+  
+errorProperties:
+  emailFlag: "true"
+  sourceSystem: "ENOVIA"
+  targetSystem: "ORACLE FUSION"
+  mailAddress: "dhananjay.patil@emerson.com"
+  businessName: "Item system api"  
+ 
+  

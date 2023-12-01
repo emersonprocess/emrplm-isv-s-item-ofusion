@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:sap="http://www.mulesoft.org/schema/mule/sap"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="c16e4707-b3ea-4299-984c-089fae0085b6" >
+		<http:request-connection >
+			<http:authentication >
+				<http:basic-authentication username="SCM00.INSTRUCTOR" password="spG*8A%8" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<flow name="aslplm-isv-s-item-fusion-mainflow" doc:id="51d1d8c4-0a44-4c1f-8780-eb659ef47370">
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="5cec19d3-f06b-4d01-bd3e-424058ac4149" destination="${secure::anypointMQ.queue}" config-ref="Anypoint_MQ_Config" />
+		<logger level="INFO" doc:name="initial_payload" doc:id="75135993-e556-4ec3-895b-0358d7bda17f" message="initial_payload::::::::::::::::::::::::::::::::#[payload]" />
+		<ee:transform doc:name="initial_variables" doc:id="07c4cd25-76d2-4e91-865b-1a179110cc4c">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="targetSystemName"><![CDATA[%dw 2.0
+output application/java
+---
+(payload.Item.MessageHeader.Target.ApplicationTypeCode) ++ (payload.Item.MessageHeader.Target.ID)]]></ee:set-variable>
+				<ee:set-variable variableName="targetSystemId"><![CDATA[%dw 2.0
+output application/java
+---
+payload.Item.MessageHeader.Target.ID]]></ee:set-variable>
+				<ee:set-variable variableName="plantName"><![CDATA[%dw 2.0
+output application/java
+---
+payload.Item.MessageHeader.Target.ServiceName
+]]></ee:set-variable>
+				<ee:set-variable variableName="targetSystem"><![CDATA[%dw 2.0
+output application/java
+---
+payload.Item.MessageHeader.Target.ApplicationTypeCode]]></ee:set-variable>
+				<ee:set-variable variableName="receivedmessage" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="tracePointDescription" doc:id="1b5598a3-4106-4e50-a7e8-697b08a86686">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="tracePointDescription"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	 tracePointDescription: "Starting of the " ++ Mule::p('app.name') 
+}]]></ee:set-variable>
+				<ee:set-variable variableName="businessObject"><![CDATA[%dw 2.0
+output application/java
+---
+{   "businessObjectName": "Item Details",
+    "businessIdentifier1": "material name",
+    "businessIdentifier1Value": vars.recievedmessage.MCO_NAME[0] default ""
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="7012fb4d-4317-49b4-869c-77e1f47feca1" name="clientLoggingPublisherFlow" />
+		<choice doc:name="Choice" doc:id="de082fa0-4aa3-41b5-b4a4-ad3f888458fd">
+			<when expression='#[vars.targetSystem == "FUSION"]'>
+				<flow-ref doc:name="aslplm-isv-s-item-fusion-subflow" doc:id="46d0a52b-66da-499d-a5b5-e2fcd5456eb6" name="aslplm-isv-s-item-fusion-subflow" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="28dccd3a-d36b-4ba2-b200-828d6bb9b872" message="Target System Not defined :::::::::::::::::::::::::::::::#[payload]" />
+				<raise-error doc:name="Raise error" doc:id="a3990ee5-14d9-4a23-8cac-624b9f0aaf18" type="ANY" description="Incorrect payload please check the SenderID and TargetID" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="End tracePointDescription" doc:id="ddbfb556-4c7c-47af-8fb6-b9270f5d1671">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="tracePointDescription"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	 tracePointDescription: "Ending of the " ++ Mule::p('app.name') 
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="8d656809-88e5-4260-a1c8-7c360a01df20" name="clientLoggingPublisherFlow" />
+	</flow>
+	<sub-flow name="aslplm-isv-s-item-fusion-subflow" doc:id="adecf490-9a79-4c4c-820b-0981fc633838">
+		<logger level="INFO" doc:name="forEach payload" doc:id="b9c7e8a3-d2be-486e-915b-fb873652369b" message="forEach Item payload :::::::::::::::#[payload]" />
+		<foreach doc:name="For Each" doc:id="1535cc18-e7b9-4378-90b5-e550559ed49f" collection="#[vars.receivedmessage.Item.DataArea.Parts[0].ModelString]">
+			<ee:transform doc:name="fusionPayload" doc:id="0f3bc4c7-4db8-42f2-8788-9723c03daffa">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+					<ee:set-variable variableName="fusion_Payload" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+"OrganizationCode": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].OrganizationCode as String,
+"ItemClass" : vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].ItemClass as String,
+"ItemNumber" : vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].ItemNumber as String,
+"ItemDescription" : vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].ItemDescription as String,
+"ItemStatusValue" : vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].ItemStatusValue as String,
+"PrimaryUOMValue" : vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].PrimaryUOMValue as String,
+"LifecyclePhaseValue" : vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].LifecyclePhaseValue as String
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<logger level="INFO" doc:name="before_Request_log" doc:id="57c66551-c9a3-4914-88ad-1bf80e6169a9" message="this is the FUSION payload::::::::::::::::#[vars.fusion_Payload]" />
+			<choice doc:name="Choice" doc:id="e3e28bc6-55e7-4e3b-a00c-8c99c3ef0ded">
+				<when expression='#[vars.targetSystemId == "D03"]'>
+					<http:request method="${secure::betsyRequest.Method}" doc:name="RequestToOracle" doc:id="90c425e7-ab4d-4843-8c02-f4a2c280051a" config-ref="Request_to_Betsyd10" path="${secure::betsyRequest.path}">
+						<http:body ><![CDATA[#[vars.fusion_Payload]]]></http:body>
+					</http:request>
+					<ee:transform doc:name="Transform Message" doc:id="a9395a52-376a-43d8-9ed4-adc7bd1350d0" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="fusion_Response" ><![CDATA[payload]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<otherwise>
+					<logger level="INFO" doc:name="Logger" doc:id="dc6c5fb2-ad97-4791-a3a2-b5d169a30081" message="Target instance is not correct #[payload]" />
+					<raise-error doc:name="Raise error" doc:id="644db1d3-3e78-48b5-a100-e9ab7979fba5" type="ANY" description="targetSystemId is not found" />
+				</otherwise>
+			</choice>
+			<choice doc:name="Choice" doc:id="09b12e6f-7794-4546-be54-303693bed5ff" >
+				<when expression='#[attributes.statusCode ==201]'>
+					<ee:transform doc:name="urlcreation" doc:id="c18185c7-2cc2-478a-895d-71425838499a" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="oracleUrl" ><![CDATA[%dw 2.0
+output application/json
+
+---
+{
+"URL":Mule::p("secure::GET.Url") ++"?q="++ "ItemNumber='" ++ (vars.fusion_Response.ItemNumber default  "")  ++ "';OrganizationCode='" ++ (vars.fusion_Response.OrganizationCode  default '') default "" ++ "'"
+}]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<http:request method="${secure::GET.method}" doc:name="GET Method" doc:id="2ab71fd0-c97c-4f8c-8eb1-6ae970857200" config-ref="emrplm-isv-s-item-ofusion-get" url="#[vars.oracleUrl.URL]" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}" >
+						<ee:repeatable-file-store-stream inMemorySize="${secure::GET.memory}" />
+						<http:headers ><![CDATA[#[output application/json
+---
+{
+	"ContentType" : "application/json"
+}]]]></http:headers>
+						<http:response-validator >
+							<http:success-status-code-validator values="${secure::GET.successCodeValidator}" />
+						</http:response-validator>
+					</http:request>
+					<logger level="INFO" doc:name="payload after first get method" doc:id="b20a099d-b7a0-4a5d-9308-0d6e466474f1" message="payload after first get method::::::::::::::::::::::::::#[payload]"/>
+					<ee:transform doc:name="Transform Message" doc:id="dc5f083c-3c33-41e9-9f80-3ec5e658d828">
+						<ee:message>
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="itemCategory" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "items": payload.items[0].links.href[102] 
+}]]></ee:set-variable>
+							<ee:set-variable variableName="post_data" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "ItemId": vars.ItemId,
+  "ItemCatalog":"EMR DIVISION ARG",
+  "CategoryCode":"MMI.LB0.N/A.N/A"
+}]]></ee:set-variable>
+							<ee:set-variable variableName="ItemId" ><![CDATA[ payload.items[0].ItemId]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<http:request method="${secure::betsyRequest.Method}" doc:name="POST Method" doc:id="dbfeff8e-83f2-4f91-9069-7249cf24ea31" config-ref="emrplm-isv-s-item-ofusion-get" url="#[vars.itemCategory.items]" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}" >
+						<ee:repeatable-file-store-stream inMemorySize="${secure::GET.memory}" />
+						<http:body ><![CDATA[#[vars.post_data]]]></http:body>
+						<http:headers ><![CDATA[#[output application/json
+---
+{
+	"ContentType" : "application/json"
+}]]]></http:headers>
+						<http:response-validator >
+							<http:success-status-code-validator values="${secure::GET.successCodeValidator}" />
+						</http:response-validator>
+					</http:request>
+					<logger level="INFO" doc:name="payload after the second get method" doc:id="414d9238-9826-4d86-8919-7d9d99b07821" message="payload after the second get method: #[payload]"/>
+				</when>
+				<otherwise >
+					<logger level="INFO" doc:name="Logger" doc:id="2d2c410d-dee5-4cd1-a68c-d9cf8dc8e664" message="Target instance is not correct #[payload]" />
+					<raise-error doc:name="Raise error" doc:id="f01f64e3-e9b5-4341-b156-c29d5f9d6f5f" type="ANY" description="Payload is not correct please check " />
+				</otherwise>
+			</choice>
+			
+		</foreach>
+	</sub-flow>
+</mule>
