@@ -39,7 +39,7 @@
 		<build.number>${BUILD_NUMBER}</build.number>
 
 		<maven.build.timestamp.format>yyMMddHHmmss</maven.build.timestamp.format>
-		<build.name>emrplm-isv-s-item-ogsi</build.name>
+		<build.name>emrplm-isv-s-item-ofusion</build.name>
 	</properties>
 
 	<build>
