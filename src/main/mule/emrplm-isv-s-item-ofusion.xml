@@ -60,7 +60,9 @@ output application/csv separator=",",header=true
     "RevisionEffectivityDate": "",
     "RevisionImplementationDate": "",
     "MCO#": "MMBMCO125",
-    "MCO#EffDate": "2023-12-05T20:00:00.235-0700"
+    "MCO#EffDate": "2023-12-05T20:00:00.235-0700",
+    "Item Category Name":"EMR DIVISION ARG",
+    "Item Category Code":"MMI.LB0.N/A.N/A"					
 
 }]]]></ee:set-variable>
 			</ee:variables>
@@ -74,7 +76,7 @@ output application/csv separator=",",header=true
 import * from dw::core::Binaries
 output application/json
 ---
-toBase64(write(vars.csv, "application/json"))]]></ee:set-variable>
+toBase64(write(vars.csv, "application/csv"))]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="printingAfterConversionToBase64" doc:id="54cd0c0d-b789-40da-884b-433ac7510ac0" message="#[vars.base64]"/>
@@ -135,7 +137,7 @@ output application/json
 {
     "BatchName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].BatchName,
     "SpokeSystemName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName,
-    "DefaultOrganizationCode": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].DefaultOrganizationCode,
+    "DefaultOrganizationCode": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].OrganizationCode,
 
 }
  ]]></ee:set-variable>
