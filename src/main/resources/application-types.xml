@@ -588,6 +588,4 @@ type auto_adecf490_9a79_4c4c_820b_0981fc633838_Output_Variables_plantName = Any
       </types:output-event>
     </types:processor-declaration>
   </types:enrichment>
-  <types:enrichment select="#a9395a52-376a-43d8-9ed4-adc7bd1350d0"/>
-  <types:enrichment select="#dc5f083c-3c33-41e9-9f80-3ec5e658d828"/>
 </types:mule>

@@ -11,7 +11,7 @@ anypointMQ:
 betsyRequest:
         host: "fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com"
         port: "443"
-        path: "/fscmRestApi/resources/11.13.18.05/itemsV2" 
+        path: "/fscmRestApi/resources/11.13.18.05/itemBatches" 
         basePath: "/"
         protocol: "HTTPS"
         Method: "POST"
@@ -23,21 +23,21 @@ betsyRequest:
         password: "spG*8A%8"
         
 GET:
+  host: "fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com"
+  port: "443"
+  path: "/fscmRestApi/resources/11.13.18.05/erpintegrations" 
+  basePath: "/"
   protocol: "HTTPS"
-  host: "cieq312.emrsn.org"
-  port: "8412"
-  connectionIdleTimeout: "60000"
-  memory: "512"
+  Method: "POST"
+  memory: "90000"
   maxConnections: "-1"
-  userName: "TEST_BTAB"
-  password: "![dzDOCgfy2CcSDy0zc0jMkQ==]"
-  Url: "https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/latest/itemsV2" 
-  method: "GET"
-  successCodeValidator: "200,201"
-  retryCount: "2"
-  retryFreq: "2000"
-  responseTimeout: "60000"
-  buffersize: "1024"      
+  connectionIdleTimeout: "90000"
+  responseTimeout: "40000"
+  successCodeValidator: "201"
+  buffersize: "1024"
+  username: "SCM00.INSTRUCTOR"
+  password: "spG*8A%8"   
+          
   
 retryStrategy:
   retry: "2"
