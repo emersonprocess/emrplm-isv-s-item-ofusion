@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 			</http:authentication>
 		</http:request-connection>
 	</http:request-config>
-	<flow name="aslplm-isv-s-item-fusion-mainflow" doc:id="51d1d8c4-0a44-4c1f-8780-eb659ef47370">
+	<flow name="emrplm-isv-s-item-fusion-mainflow" doc:id="51d1d8c4-0a44-4c1f-8780-eb659ef47370">
 		<anypoint-mq:subscriber doc:name="SubscribingFusionQueue" doc:id="5cec19d3-f06b-4d01-bd3e-424058ac4149" destination="${secure::anypointMQ.queue}" config-ref="Anypoint_MQ_Config" />
 		<logger level="INFO" doc:name="initial_payload" doc:id="75135993-e556-4ec3-895b-0358d7bda17f" message="initial_payload::::::::::::::::::::::::::::::::#[payload]" />
 		<ee:transform doc:name="initial_variables" doc:id="07c4cd25-76d2-4e91-865b-1a179110cc4c">
@@ -50,19 +50,19 @@ output application/csv separator=",",header=true
     "Transaction Type": "SYNC",
     "Org": payload.Item.DataArea.Parts[0].ModelString[0].DefaultOrganizationCode as Number default "000",
     "Item": payload.Item.DataArea.Parts[0].ModelString[0].ItemName,
-    "Item description": payload.Item.DataArea.Parts[0].ModelString[0].ItemName,
+    "Item description": payload.Item.DataArea.Parts[0].ModelString[0].ItemDescription,
     "Item Class": "Root Item Class",
-    "Primary UOM": payload.Item.DataArea.Parts[0].ModelString[0].PrimaryUOMValue,
+    "Primary UOM": payload.Item.DataArea.Parts[0].ModelString[0].Attribute26,
     "Item Template": "Finished Goods",
-    "RevisionCode": "AB",
+    "RevisionCode": payload.Item.DataArea.Parts[0].ModelString[0].ItemRevision,
     "ItemRevisionDescription": "MMBMCO125",
     "RevisionReasonValue": "",
     "RevisionEffectivityDate": "",
     "RevisionImplementationDate": "",
-    "MCO#": "MMBMCO125",
+    "MCO#": payload.Item.MessageHeader.MessageTracking.ExecutionUnitName,
     "MCO#EffDate": "2023-12-05T20:00:00.235-0700",
     "Item Category Name":"EMR DIVISION ARG",
-    "Item Category Code":"MMI.LB0.N/A.N/A"					
+    "Item Category Code":"MMI.LB0.N/A.N/A"
 
 }]]]></ee:set-variable>
 			</ee:variables>
@@ -103,7 +103,7 @@ output application/java
 		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="7012fb4d-4317-49b4-869c-77e1f47feca1" name="clientLoggingPublisherFlow" />
 		<choice doc:name="varifyingTargetSystem" doc:id="de082fa0-4aa3-41b5-b4a4-ad3f888458fd">
 			<when expression='#[vars.targetSystem == "FUSION"]'>
-				<flow-ref doc:name="aslplm-isv-s-item-fusion-subflow" doc:id="46d0a52b-66da-499d-a5b5-e2fcd5456eb6" name="aslplm-isv-s-item-fusion-subflow" />
+				<flow-ref doc:name="aslplm-isv-s-item-fusion-subflow" doc:id="46d0a52b-66da-499d-a5b5-e2fcd5456eb6" name="emrplm-isv-s-item-fusion-subflow" />
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="Logger" doc:id="28dccd3a-d36b-4ba2-b200-828d6bb9b872" message="Target System Not defined :::::::::::::::::::::::::::::::#[payload]" />
@@ -124,7 +124,7 @@ output application/java
 		</ee:transform>
 		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="8d656809-88e5-4260-a1c8-7c360a01df20" name="clientLoggingPublisherFlow" />
 	</flow>
-	<sub-flow name="aslplm-isv-s-item-fusion-subflow" doc:id="adecf490-9a79-4c4c-820b-0981fc633838">
+	<sub-flow name="emrplm-isv-s-item-fusion-subflow" doc:id="adecf490-9a79-4c4c-820b-0981fc633838">
 		<logger level="INFO" doc:name="forEach payload" doc:id="b9c7e8a3-d2be-486e-915b-fb873652369b" message="forEach Item payload :::::::::::::::#[payload]" />
 		<foreach doc:name="For Each" doc:id="1535cc18-e7b9-4378-90b5-e550559ed49f" collection="#[vars.receivedmessage.Item.DataArea.Parts[0].ModelString]">
 			<ee:transform doc:name="fusionPayload" doc:id="0f3bc4c7-4db8-42f2-8788-9723c03daffa">
@@ -165,14 +165,13 @@ output application/json
 						<ee:variables >
 							<ee:set-variable variableName="uploadUcm" ><![CDATA[%dw 2.0
 output application/json
-
 ---
 {
     "OperationName": "uploadFileToUCM",
     "DocumentContent": vars.base64,
     "DocumentAccount": "scm\$/item\$/import\$",
     "ContentType": "csv",
-    "FileName": "Test73.csv",
+    "FileName": "Test" ++ now() as String {format: "HH:mm:ss"}++ ".csv",
     "DocumentId":null
 }
 ]]></ee:set-variable>
