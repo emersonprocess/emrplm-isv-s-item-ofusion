@@ -48,14 +48,14 @@ output application/csv separator=",",header=true
 ---
 [{
     "Transaction Type": "SYNC",
-    "Org": payload.Item.DataArea.Parts[0].ModelString[0].DefaultOrganizationCode as Number default "000",
+    "Org": if(payload.Item.DataArea.Parts[0].ModelString[0].OrganizationCode == "MVO") "000" else "000",
     "Item": payload.Item.DataArea.Parts[0].ModelString[0].ItemName,
     "Item description": payload.Item.DataArea.Parts[0].ModelString[0].ItemDescription,
     "Item Class": "Root Item Class",
     "Primary UOM": payload.Item.DataArea.Parts[0].ModelString[0].Attribute26,
-    "Item Template": "Finished Goods",
+    "Item Template": payload.Item.DataArea.Parts[0].ModelString[0].ItemType,
     "RevisionCode": payload.Item.DataArea.Parts[0].ModelString[0].ItemRevision,
-    "ItemRevisionDescription": "MMBMCO125",
+    "ItemRevisionDescription": payload.Item.MessageHeader.MessageTracking.ExecutionUnitName,
     "RevisionReasonValue": "",
     "RevisionEffectivityDate": "",
     "RevisionImplementationDate": "",
@@ -126,16 +126,15 @@ output application/java
 	</flow>
 	<sub-flow name="emrplm-isv-s-item-fusion-subflow" doc:id="adecf490-9a79-4c4c-820b-0981fc633838">
 		<logger level="INFO" doc:name="forEach payload" doc:id="b9c7e8a3-d2be-486e-915b-fb873652369b" message="forEach Item payload :::::::::::::::#[payload]" />
-		<foreach doc:name="For Each" doc:id="1535cc18-e7b9-4378-90b5-e550559ed49f" collection="#[vars.receivedmessage.Item.DataArea.Parts[0].ModelString]">
-			<ee:transform doc:name="fusionPayload" doc:id="0f3bc4c7-4db8-42f2-8788-9723c03daffa">
+		<ee:transform doc:name="fusionPayload" doc:id="0f3bc4c7-4db8-42f2-8788-9723c03daffa">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
-					<ee:set-variable variableName="fusion_Payload" ><![CDATA[%dw 2.0
+					<ee:set-variable variableName="fusion_Payload"><![CDATA[%dw 2.0
 output application/json
 ---
 {
-    "BatchName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].BatchName,
+    "BatchName": now(),
     "SpokeSystemName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName,
     "DefaultOrganizationCode": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].OrganizationCode,
 
@@ -143,27 +142,27 @@ output application/json
  ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-			<logger level="INFO" doc:name="before_Request_log" doc:id="57c66551-c9a3-4914-88ad-1bf80e6169a9" message="this is the FUSION payload::::::::::::::::#[vars.fusion_Payload]" />
-			<choice doc:name="varifyingTargetSystemId" doc:id="e3e28bc6-55e7-4e3b-a00c-8c99c3ef0ded">
+		<logger level="INFO" doc:name="before_Request_log" doc:id="57c66551-c9a3-4914-88ad-1bf80e6169a9" message="this is the FUSION payload::::::::::::::::#[vars.fusion_Payload]" />
+		<choice doc:name="varifyingTargetSystemId" doc:id="e3e28bc6-55e7-4e3b-a00c-8c99c3ef0ded">
 				<when expression='#[vars.targetSystemId == "D03"]'>
 					<http:request method="${secure::betsyRequest.Method}" doc:name="requestToCreateBatch" doc:id="90c425e7-ab4d-4843-8c02-f4a2c280051a" config-ref="Request_to_Betsyd10" path="${secure::betsyRequest.path}">
-						<http:body ><![CDATA[#[vars.fusion_Payload]]]></http:body>
+						<http:body><![CDATA[#[vars.fusion_Payload]]]></http:body>
 					</http:request>
-					<logger level="INFO" doc:name="printingResponseAfterCreateBatch" doc:id="891311a8-5443-4973-9ec7-1484ae328096" message="response after the batch is created: #[payload]"/>
-					<set-variable value="#[payload]" doc:name="Set Variable" doc:id="47db12f7-af9b-4e37-9f53-a2c58fd2ae55" variableName="fusion_Response"/>
+					<logger level="INFO" doc:name="printingResponseAfterCreateBatch" doc:id="891311a8-5443-4973-9ec7-1484ae328096" message="response after the batch is created: #[payload]" />
+					<set-variable value="#[payload]" doc:name="Set Variable" doc:id="47db12f7-af9b-4e37-9f53-a2c58fd2ae55" variableName="fusion_Response" />
 				</when>
 				<otherwise>
 					<logger level="INFO" doc:name="Logger" doc:id="dc6c5fb2-ad97-4791-a3a2-b5d169a30081" message="Target instance is not correct #[payload]" />
 					<raise-error doc:name="Raise error" doc:id="644db1d3-3e78-48b5-a100-e9ab7979fba5" type="ANY" description="targetSystemId is not found" />
 				</otherwise>
 			</choice>
-			<choice doc:name="varifyingStatusCode" doc:id="09b12e6f-7794-4546-be54-303693bed5ff" >
-				<when expression='#[attributes.statusCode ==201]'>
-					<ee:transform doc:name="FileToUcmMapping" doc:id="c18185c7-2cc2-478a-895d-71425838499a" >
-						<ee:message >
+		<choice doc:name="varifyingStatusCode" doc:id="09b12e6f-7794-4546-be54-303693bed5ff">
+				<when expression="#[attributes.statusCode ==201]">
+					<ee:transform doc:name="FileToUcmMapping" doc:id="c18185c7-2cc2-478a-895d-71425838499a">
+						<ee:message>
 						</ee:message>
-						<ee:variables >
-							<ee:set-variable variableName="uploadUcm" ><![CDATA[%dw 2.0
+						<ee:variables>
+							<ee:set-variable variableName="uploadUcm"><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -177,25 +176,25 @@ output application/json
 ]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<logger level="INFO" doc:name="printingMappingOutput" doc:id="cd34d3d6-8d67-4be9-ad5a-10e2896da18c" message="#[vars.uploadUcm]"/>
-					<http:request method="POST" doc:name="request to send file to location" doc:id="2ab71fd0-c97c-4f8c-8eb1-6ae970857200" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/11.13.18.05/erpintegrations" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}" >
+					<logger level="INFO" doc:name="printingMappingOutput" doc:id="cd34d3d6-8d67-4be9-ad5a-10e2896da18c" message="#[vars.uploadUcm]" />
+					<http:request method="POST" doc:name="request to send file to location" doc:id="2ab71fd0-c97c-4f8c-8eb1-6ae970857200" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/11.13.18.05/erpintegrations" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
 						<ee:repeatable-file-store-stream inMemorySize="${secure::GET.memory}" />
-						<http:body ><![CDATA[#[vars.uploadUcm]]]></http:body>
-						<http:headers ><![CDATA[#[output application/json
+						<http:body><![CDATA[#[vars.uploadUcm]]]></http:body>
+						<http:headers><![CDATA[#[output application/json
 ---
 {
 	"ContentType" : "application/json"
 }]]]></http:headers>
-						<http:response-validator >
+						<http:response-validator>
 							<http:success-status-code-validator values="${secure::GET.successCodeValidator}" />
 						</http:response-validator>
 					</http:request>
-					<logger level="INFO" doc:name="printingResponseOfSendFile" doc:id="b20a099d-b7a0-4a5d-9308-0d6e466474f1" message="payload after sending the file to location::::::::::::::::::::::::::#[payload]"/>
+					<logger level="INFO" doc:name="printingResponseOfSendFile" doc:id="b20a099d-b7a0-4a5d-9308-0d6e466474f1" message="payload after sending the file to location::::::::::::::::::::::::::#[payload]" />
 					<ee:transform doc:name="submitBatchMapping" doc:id="23144261-b518-4394-9d28-2dcf5f24e894">
 						<ee:message>
 						</ee:message>
-						<ee:variables >
-							<ee:set-variable variableName="batchdata" ><![CDATA[%dw 2.0
+						<ee:variables>
+							<ee:set-variable variableName="batchdata"><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -209,7 +208,7 @@ output application/json
 }]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<logger level="INFO" doc:name="printingBatchMappingOutput" doc:id="9ad23992-0fac-4f11-9416-688fb0066afd" message="#[vars.batchdata]"/>
+					<logger level="INFO" doc:name="printingBatchMappingOutput" doc:id="9ad23992-0fac-4f11-9416-688fb0066afd" message="#[vars.batchdata]" />
 					<http:request method="POST" doc:name="request for Submit batch" doc:id="f2d5ad78-ce4f-43ec-b4f2-01bab5d22517" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/itemBatches" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
 						<ee:repeatable-file-store-stream inMemorySize="${secure::GET.memory}" />
 						<http:body><![CDATA[#[vars.batchdata]]]></http:body>
@@ -222,14 +221,12 @@ output application/json
 							<http:success-status-code-validator values="200" />
 						</http:response-validator>
 					</http:request>
-					<logger level="INFO" doc:name="PrintingSubmitBatch" doc:id="414d9238-9826-4d86-8919-7d9d99b07821" message="Response after submitting the batch: #[payload]"/>
+					<logger level="INFO" doc:name="PrintingSubmitBatch" doc:id="414d9238-9826-4d86-8919-7d9d99b07821" message="Response after submitting the batch: #[payload]" />
 				</when>
-				<otherwise >
+				<otherwise>
 					<logger level="INFO" doc:name="Logger" doc:id="2d2c410d-dee5-4cd1-a68c-d9cf8dc8e664" message="Target instance is not correct #[payload]" />
 					<raise-error doc:name="Raise error" doc:id="f01f64e3-e9b5-4341-b156-c29d5f9d6f5f" type="ANY" description="Payload is not correct please check " />
 				</otherwise>
 			</choice>
-			
-		</foreach>
 	</sub-flow>
 </mule>
