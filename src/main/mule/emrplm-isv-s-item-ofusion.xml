@@ -63,7 +63,6 @@ output application/csv separator=",",header=true
     "MCO#EffDate": "2023-12-05T20:00:00.235-0700",
     "Item Category Name":"EMR DIVISION ARG",
     "Item Category Code":"MMI.LB0.N/A.N/A"
-
 }]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
@@ -136,7 +135,7 @@ output application/json
 {
     "BatchName": now(),
     "SpokeSystemName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName,
-    "DefaultOrganizationCode": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].OrganizationCode,
+    "DefaultOrganizationCode": if(payload.Item.DataArea.Parts[0].ModelString[0].OrganizationCode == "MVO") "000" else "000"
 
 }
  ]]></ee:set-variable>
@@ -189,8 +188,19 @@ output application/json
 							<http:success-status-code-validator values="${secure::GET.successCodeValidator}" />
 						</http:response-validator>
 					</http:request>
-					<logger level="INFO" doc:name="printingResponseOfSendFile" doc:id="b20a099d-b7a0-4a5d-9308-0d6e466474f1" message="payload after sending the file to location::::::::::::::::::::::::::#[payload]" />
-					<ee:transform doc:name="submitBatchMapping" doc:id="23144261-b518-4394-9d28-2dcf5f24e894">
+					<flow-ref doc:name="calling emrplm-isv-s-item-ofusionSub_Flow" doc:id="6199fd29-e85c-4ea1-bfa7-41af3467ce2f" name="emrplm-isv-s-item-ofusionSub_Flow"/>
+				</when>
+				<otherwise>
+					<logger level="INFO" doc:name="Logger" doc:id="2d2c410d-dee5-4cd1-a68c-d9cf8dc8e664" message="Target instance is not correct #[payload]" />
+					<raise-error doc:name="Raise error" doc:id="f01f64e3-e9b5-4341-b156-c29d5f9d6f5f" type="ANY" description="batch is not created please try again " />
+				</otherwise>
+			</choice>
+	</sub-flow>
+	<sub-flow name="emrplm-isv-s-item-ofusionSub_Flow" doc:id="fd7cab5b-150d-469c-ac51-51aec7aa86d9" >
+		<choice doc:name="Choice" doc:id="8ee99f0d-bf77-479c-abbc-f9a957b66139" >
+			<when expression="attributes.statusCode ==201">
+				<logger level="INFO" doc:name="printingResponseOfSendFile" doc:id="b20a099d-b7a0-4a5d-9308-0d6e466474f1" message="payload after sending the file to location::::::::::::::::::::::::::#[payload]" />
+				<ee:transform doc:name="submitBatchMapping" doc:id="23144261-b518-4394-9d28-2dcf5f24e894">
 						<ee:message>
 						</ee:message>
 						<ee:variables>
@@ -208,8 +218,8 @@ output application/json
 }]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<logger level="INFO" doc:name="printingBatchMappingOutput" doc:id="9ad23992-0fac-4f11-9416-688fb0066afd" message="#[vars.batchdata]" />
-					<http:request method="POST" doc:name="request for Submit batch" doc:id="f2d5ad78-ce4f-43ec-b4f2-01bab5d22517" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/itemBatches" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
+				<logger level="INFO" doc:name="printingBatchMappingOutput" doc:id="9ad23992-0fac-4f11-9416-688fb0066afd" message="#[vars.batchdata]" />
+				<http:request method="POST" doc:name="request for Submit batch" doc:id="f2d5ad78-ce4f-43ec-b4f2-01bab5d22517" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/itemBatches" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
 						<ee:repeatable-file-store-stream inMemorySize="${secure::GET.memory}" />
 						<http:body><![CDATA[#[vars.batchdata]]]></http:body>
 						<http:headers><![CDATA[#[output application/java
@@ -221,12 +231,12 @@ output application/json
 							<http:success-status-code-validator values="200" />
 						</http:response-validator>
 					</http:request>
-					<logger level="INFO" doc:name="PrintingSubmitBatch" doc:id="414d9238-9826-4d86-8919-7d9d99b07821" message="Response after submitting the batch: #[payload]" />
-				</when>
-				<otherwise>
-					<logger level="INFO" doc:name="Logger" doc:id="2d2c410d-dee5-4cd1-a68c-d9cf8dc8e664" message="Target instance is not correct #[payload]" />
-					<raise-error doc:name="Raise error" doc:id="f01f64e3-e9b5-4341-b156-c29d5f9d6f5f" type="ANY" description="Payload is not correct please check " />
-				</otherwise>
-			</choice>
+				<logger level="INFO" doc:name="PrintingSubmitBatch" doc:id="414d9238-9826-4d86-8919-7d9d99b07821" message="Response after submitting the batch: #[payload]" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="0ec4b6eb-799c-4065-b4d2-bb08801ed06d" message="Target instance is not correct #[payload]" />
+				<raise-error doc:name="Raise error" doc:id="caca979f-5562-40da-963b-7b9758c71a7f" type="ANY" description="file is not created in the location please try again" />
+			</otherwise>
+		</choice>
 	</sub-flow>
 </mule>
