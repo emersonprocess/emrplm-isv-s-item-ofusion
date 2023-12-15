@@ -135,7 +135,7 @@ output application/json
 {
     "BatchName": now(),
     "SpokeSystemName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName,
-    "DefaultOrganizationCode": if(payload.Item.DataArea.Parts[0].ModelString[0].OrganizationCode == "MVO") "000" else "000"
+    "DefaultOrganizationCode": if(vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].OrganizationCode == "MVO") "000" else "000"
 
 }
  ]]></ee:set-variable>
