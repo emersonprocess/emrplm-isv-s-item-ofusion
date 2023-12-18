@@ -134,7 +134,7 @@ output application/json
 ---
 {
     "BatchName": now(),
-    "SpokeSystemName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName default "Product Information Management Data Hub",
+    "SpokeSystemName": if((vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName != "") or (vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName != null)) vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName else "Product Information Management Data Hub",
     "DefaultOrganizationCode": if(vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].OrganizationCode == "MVO") "000" else "000"
 
 }
