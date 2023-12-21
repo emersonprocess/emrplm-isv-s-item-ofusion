@@ -228,7 +228,7 @@ output application/json
 	"Content-Type" : "application/vnd.oracle.adf.action+json"
 }]]]></http:headers>
 						<http:response-validator>
-							<http:success-status-code-validator values="201" />
+							<http:success-status-code-validator values="200" />
 						</http:response-validator>
 					</http:request>
 				<logger level="INFO" doc:name="PrintingSubmitBatch" doc:id="414d9238-9826-4d86-8919-7d9d99b07821" message="Response after submitting the batch: #[payload]" />
