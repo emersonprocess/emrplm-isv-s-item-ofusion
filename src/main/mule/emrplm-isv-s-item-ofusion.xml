@@ -48,7 +48,7 @@ output application/csv separator=",",header=true
 ---
 [{
     "Transaction Type": "SYNC",
-    "Org": if(payload.Item.DataArea.Parts[0].ModelString[0].OrganizationCode == "MVO") "000" else "000",
+    "Org": "000",
     "Item": payload.Item.DataArea.Parts[0].ModelString[0].ItemName,
     "Item description": payload.Item.DataArea.Parts[0].ModelString[0].ItemDescription,
     "Item Class": "Root Item Class",
@@ -134,8 +134,8 @@ output application/json
 ---
 {
     "BatchName": now(),
-    "SpokeSystemName": vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].SpokeSystemName default "Product Information Management Data Hub",
-    "DefaultOrganizationCode": if(vars.receivedmessage.Item.DataArea.Parts[0].ModelString[0].OrganizationCode == "MVO") "000" else "000"
+    "SpokeSystemName": "Product Information Management Data Hub",
+    "DefaultOrganizationCode": "000"
 
 }
  ]]></ee:set-variable>
