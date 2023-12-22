@@ -1,5 +1,5 @@
 anypointMQ:
- url: "https://mq-us-east-1.anypoint.mulesoft.com/api/v1"
+ url: "https://mq-us-east-1.anypoint.mulesoft.com/api/v1/organizations/22666961-71e7-4619-a324-f42a744b3fd1/environments/4d33f8c4-1285-4ac8-a381-3129d24681a4"
  MQclientid: "221755cecec3403ca0911664507620c1"
  MQclientsecret: "0C1E1979abd24238B6F15d33635A27Ee"
  queue: "dev.Q.asldpis.itemdetails.fusion"
