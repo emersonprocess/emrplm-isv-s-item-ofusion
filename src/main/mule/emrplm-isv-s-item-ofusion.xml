@@ -7,18 +7,18 @@ http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
-	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="c16e4707-b3ea-4299-984c-089fae0085b6" >
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="b807d102-c834-4023-976f-4293b0587882" >
 		<http:request-connection >
 			<http:authentication >
 				<http:basic-authentication username="SCM00.INSTRUCTOR" password="spG*8A%8" />
 			</http:authentication>
 		</http:request-connection>
 	</http:request-config>
-	<flow name="emrplm-isv-s-item-fusion-mainflow" doc:id="51d1d8c4-0a44-4c1f-8780-eb659ef47370">
-		<anypoint-mq:subscriber doc:name="SubscribingFusionQueue" doc:id="5cec19d3-f06b-4d01-bd3e-424058ac4149" destination="${secure::anypointMQ.queue}" config-ref="Anypoint_MQ_Config" />
-		<logger level="INFO" doc:name="initial_payload" doc:id="75135993-e556-4ec3-895b-0358d7bda17f" message="initial_payload::::::::::::::::::::::::::::::::#[payload]" />
-		<ee:transform doc:name="initial_variables" doc:id="07c4cd25-76d2-4e91-865b-1a179110cc4c">
-			<ee:message >
+	<flow name="emrplm-isv-s-item-fusion-mainflow" doc:id="534615a1-e5ce-4ad7-a42b-f1e8a277a707">
+		<anypoint-mq:subscriber doc:name="SubscribingFusionQueue" doc:id="d89143ea-40b2-4ffa-8c67-ebe2968608db" destination="${secure::anypointMQ.queue}" config-ref="Anypoint_MQ_Config" />
+		<logger level="INFO" doc:name="initial_payload" doc:id="1d7954bd-ddb7-4165-874c-7add6869cab9" message="initial_payload::::::::::::::::::::::::::::::::#[payload]" />
+		<ee:transform doc:name="initial_variables" doc:id="6c2fc5b3-ee5a-4f80-a883-03258268bac9">
+			<ee:message>
 			</ee:message>
 			<ee:variables>
 				<ee:set-variable variableName="targetSystemName"><![CDATA[%dw 2.0
@@ -38,11 +38,11 @@ payload.Item.MessageHeader.Target.ServiceName
 output application/java
 ---
 payload.Item.MessageHeader.Target.ApplicationTypeCode]]></ee:set-variable>
-				<ee:set-variable variableName="receivedmessage" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="receivedmessage"><![CDATA[%dw 2.0
 output application/json
 ---
 payload]]></ee:set-variable>
-				<ee:set-variable variableName="csv" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="csv"><![CDATA[%dw 2.0
 output application/csv separator=",",header=true
 
 ---
@@ -64,10 +64,42 @@ output application/csv separator=",",header=true
     "Item Category Name":"EMR DIVISION ARG",
     "Item Category Code":"MMI.LB0.N/A.N/A"
 }]]]></ee:set-variable>
+				<ee:set-variable variableName="java" ><![CDATA[%dw 2.0
+output application/java
+
+---
+ payload.Item.DataArea.Parts[0].ModelString map (x, y) -> {
+    "Transaction Type": "SYNC",
+    "Org": "000",
+    "Item": x.ItemName,
+    "Item description": x.ItemDescription,
+    "Item Class": "Root Item Class",
+    "Primary UOM": x.Attribute26,
+    "Item Template": x.ItemType,
+    "RevisionCode": x.ItemRevision,
+    "ItemRevisionDescription": payload.Item.MessageHeader.MessageTracking.ExecutionUnitName,
+    "RevisionReasonValue": "",
+    "RevisionEffectivityDate": "",
+    "RevisionImplementationDate": "",
+    "MCO#": payload.Item.MessageHeader.MessageTracking.ExecutionUnitName,
+    "MCO#EffDate": "2023-12-05T20:00:00.235-0700",
+    "Item Category Name":"EMR DIVISION ARG",
+    "Item Category Code":"MMI.LB0.N/A.N/A"
+}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="printingAfterConversionToCsv" doc:id="af4213fc-104d-4499-bbdb-4cf1aab5dfde" message="csv file before the encryption: #[vars.csv]"/>
-		<ee:transform doc:name="csvtobase64" doc:id="0940ce11-efdc-4746-b002-ff4b7b3762a5" >
+		<ee:transform doc:name="Transform Message" doc:id="64df0eef-dba8-4818-92bd-cfc15f951841" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="csv" ><![CDATA[%dw 2.0
+output application/csv 
+---
+vars.java]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="printingAfterConversionToCsv" doc:id="02c5ff0b-42ac-4b57-b927-2486605e7787" message="csv file before the encryption: #[vars.csv]"/>
+		<ee:transform doc:name="csvtobase64" doc:id="fd8a5136-3e51-45ef-9334-d1a4875abfe6" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
@@ -78,8 +110,8 @@ output application/json
 toBase64(write(vars.csv, "application/csv"))]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="printingAfterConversionToBase64" doc:id="54cd0c0d-b789-40da-884b-433ac7510ac0" message="#[vars.base64]"/>
-		<ee:transform doc:name="tracePointDescription" doc:id="1b5598a3-4106-4e50-a7e8-697b08a86686">
+		<logger level="INFO" doc:name="printingAfterConversionToBase64" doc:id="6a81dcbb-b7cf-498b-819d-9019c426c49b" message="#[vars.base64]"/>
+		<ee:transform doc:name="tracePointDescription" doc:id="942cf028-b7d0-448d-a7a9-ed8f0ed6c763">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
@@ -99,17 +131,17 @@ output application/java
 ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="7012fb4d-4317-49b4-869c-77e1f47feca1" name="clientLoggingPublisherFlow" />
-		<choice doc:name="varifyingTargetSystem" doc:id="de082fa0-4aa3-41b5-b4a4-ad3f888458fd">
+		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="5850a448-f8b6-4b38-b65d-7f31296b1b2f" name="clientLoggingPublisherFlow" />
+		<choice doc:name="varifyingTargetSystem" doc:id="890b73c9-c23c-4b16-b22e-4012f3672dc4">
 			<when expression='#[vars.targetSystem == "FUSION"]'>
-				<flow-ref doc:name="aslplm-isv-s-item-fusion-subflow" doc:id="46d0a52b-66da-499d-a5b5-e2fcd5456eb6" name="emrplm-isv-s-item-fusion-subflow" />
+				<flow-ref doc:name="aslplm-isv-s-item-fusion-subflow" doc:id="cb5ebb11-ff89-4b68-8c7d-73f5088b999c" name="emrplm-isv-s-item-fusion-subflow" />
 			</when>
 			<otherwise>
-				<logger level="INFO" doc:name="Logger" doc:id="28dccd3a-d36b-4ba2-b200-828d6bb9b872" message="Target System Not defined :::::::::::::::::::::::::::::::#[payload]" />
-				<raise-error doc:name="Raise error" doc:id="a3990ee5-14d9-4a23-8cac-624b9f0aaf18" type="ANY" description="Incorrect payload please check the SenderID and TargetID" />
+				<logger level="INFO" doc:name="Logger" doc:id="623aa6e8-0a6d-423a-aeae-8244ec883ef2" message="Target System Not defined :::::::::::::::::::::::::::::::#[payload]" />
+				<raise-error doc:name="Raise error" doc:id="8760df3c-9039-4871-b120-6948ca801ae3" type="ANY" description="Incorrect payload please check the SenderID and TargetID" />
 			</otherwise>
 		</choice>
-		<ee:transform doc:name="End tracePointDescription" doc:id="ddbfb556-4c7c-47af-8fb6-b9270f5d1671">
+		<ee:transform doc:name="End tracePointDescription" doc:id="8e6a3610-8bea-48c8-9ba9-d2e040b13894">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
@@ -121,11 +153,10 @@ output application/java
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="8d656809-88e5-4260-a1c8-7c360a01df20" name="clientLoggingPublisherFlow" />
+		<flow-ref doc:name="clientLoggingPublisherFlow" doc:id="2b85a5cf-df7d-43c8-bf05-5ef5aa087ef0" name="clientLoggingPublisherFlow" />
 	</flow>
-	<sub-flow name="emrplm-isv-s-item-fusion-subflow" doc:id="adecf490-9a79-4c4c-820b-0981fc633838">
-		<logger level="INFO" doc:name="forEach payload" doc:id="b9c7e8a3-d2be-486e-915b-fb873652369b" message="forEach Item payload :::::::::::::::#[payload]" />
-		<ee:transform doc:name="fusionPayload" doc:id="0f3bc4c7-4db8-42f2-8788-9723c03daffa">
+	<sub-flow name="emrplm-isv-s-item-fusion-subflow" doc:id="a31a5ed8-6643-4779-8505-60c5b897ee5d">
+		<ee:transform doc:name="fusionPayload" doc:id="5a06dca3-73f6-498b-a4e0-2a5cec4fc7c0">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
@@ -141,23 +172,23 @@ output application/json
  ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<logger level="INFO" doc:name="before_Request_log" doc:id="57c66551-c9a3-4914-88ad-1bf80e6169a9" message="this is the FUSION payload::::::::::::::::#[vars.fusion_Payload]" />
-		<choice doc:name="varifyingTargetSystemId" doc:id="e3e28bc6-55e7-4e3b-a00c-8c99c3ef0ded">
+		<logger level="INFO" doc:name="before_Request_log" doc:id="cef1604d-1cf8-4e15-8fde-bfb649585149" message="this is the FUSION payload::::::::::::::::#[vars.fusion_Payload]" />
+		<choice doc:name="varifyingTargetSystemId" doc:id="d0073665-15d2-41c9-ad41-a85c5a5feddb">
 				<when expression='#[vars.targetSystemId == "D03"]'>
-					<http:request method="${secure::betsyRequest.Method}" doc:name="requestToCreateBatch" doc:id="90c425e7-ab4d-4843-8c02-f4a2c280051a" config-ref="Request_to_Betsyd10" path="${secure::betsyRequest.path}">
+					<http:request method="${secure::betsyRequest.Method}" doc:name="requestToCreateBatch" doc:id="f0437fbe-e840-496a-94ab-06e9931a4b3d" config-ref="Request_to_Betsyd10" path="${secure::betsyRequest.path}">
 						<http:body><![CDATA[#[vars.fusion_Payload]]]></http:body>
 					</http:request>
-					<logger level="INFO" doc:name="printingResponseAfterCreateBatch" doc:id="891311a8-5443-4973-9ec7-1484ae328096" message="response after the batch is created: #[payload]" />
-					<set-variable value="#[payload]" doc:name="Set Variable" doc:id="47db12f7-af9b-4e37-9f53-a2c58fd2ae55" variableName="fusion_Response" />
+					<logger level="INFO" doc:name="printingResponseAfterCreateBatch" doc:id="171eacf2-9ea6-445b-92c6-aff8485d5410" message="response after the batch is created: #[payload]" />
+					<set-variable value="#[payload]" doc:name="Set Variable" doc:id="b6868247-24a1-463b-9056-090cdf9229e1" variableName="fusion_Response" />
 				</when>
 				<otherwise>
-					<logger level="INFO" doc:name="Logger" doc:id="dc6c5fb2-ad97-4791-a3a2-b5d169a30081" message="Target instance is not correct #[payload]" />
-					<raise-error doc:name="Raise error" doc:id="644db1d3-3e78-48b5-a100-e9ab7979fba5" type="ANY" description="targetSystemId is not found" />
+					<logger level="INFO" doc:name="Logger" doc:id="1978ccb1-fe5c-4a71-b4ed-1812ed216ac4" message="Target instance is not correct #[payload]" />
+					<raise-error doc:name="Raise error" doc:id="ce2d005a-05ef-4791-9b0a-64323dfc9a88" type="ANY" description="targetSystemId is not found" />
 				</otherwise>
 			</choice>
-		<choice doc:name="varifyingStatusCode" doc:id="09b12e6f-7794-4546-be54-303693bed5ff">
+		<choice doc:name="varifyingStatusCode" doc:id="1e324cdb-ee31-4bab-9b44-b560ff5dc5ef">
 				<when expression="#[attributes.statusCode ==201]">
-					<ee:transform doc:name="FileToUcmMapping" doc:id="c18185c7-2cc2-478a-895d-71425838499a">
+					<ee:transform doc:name="FileToUcmMapping" doc:id="2769ba53-d7f5-4834-827f-a1df6ff80c8f">
 						<ee:message>
 						</ee:message>
 						<ee:variables>
@@ -175,8 +206,8 @@ output application/json
 ]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-					<logger level="INFO" doc:name="printingMappingOutput" doc:id="cd34d3d6-8d67-4be9-ad5a-10e2896da18c" message="#[vars.uploadUcm]" />
-					<http:request method="POST" doc:name="request to send file to location" doc:id="2ab71fd0-c97c-4f8c-8eb1-6ae970857200" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/11.13.18.05/erpintegrations" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
+					<logger level="INFO" doc:name="printingMappingOutput" doc:id="244c070e-74bb-4c45-8ee9-efe0e7dbd7d5" message="#[vars.uploadUcm]" />
+					<http:request method="POST" doc:name="request to send file to location" doc:id="146d702d-e6d6-41ac-9a0c-24301f849b3e" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/11.13.18.05/erpintegrations" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
 						<ee:repeatable-file-store-stream inMemorySize="${secure::GET.memory}" />
 						<http:body><![CDATA[#[vars.uploadUcm]]]></http:body>
 						<http:headers><![CDATA[#[output application/json
@@ -188,19 +219,19 @@ output application/json
 							<http:success-status-code-validator values="${secure::GET.successCodeValidator}" />
 						</http:response-validator>
 					</http:request>
-					<flow-ref doc:name="calling emrplm-isv-s-item-ofusionSub_Flow" doc:id="6199fd29-e85c-4ea1-bfa7-41af3467ce2f" name="emrplm-isv-s-item-ofusionSub_Flow"/>
+					<flow-ref doc:name="calling emrplm-isv-s-item-ofusionSub_Flow" doc:id="d4d2b3d4-ad65-4f4a-9312-ff69463e95ee" name="emrplm-isv-s-item-ofusionSub_Flow"/>
 				</when>
 				<otherwise>
-					<logger level="INFO" doc:name="Logger" doc:id="2d2c410d-dee5-4cd1-a68c-d9cf8dc8e664" message="Target instance is not correct #[payload]" />
-					<raise-error doc:name="Raise error" doc:id="f01f64e3-e9b5-4341-b156-c29d5f9d6f5f" type="ANY" description="batch is not created please try again " />
+					<logger level="INFO" doc:name="Logger" doc:id="108736f0-0ead-4cd8-89b6-72ee94f92259" message="Target instance is not correct #[payload]" />
+					<raise-error doc:name="Raise error" doc:id="d613aab0-5530-4bdd-9ba7-f8d7b462c6e6" type="ANY" description="batch is not created please try again " />
 				</otherwise>
 			</choice>
 	</sub-flow>
-	<sub-flow name="emrplm-isv-s-item-ofusionSub_Flow" doc:id="fd7cab5b-150d-469c-ac51-51aec7aa86d9" >
-		<choice doc:name="Choice" doc:id="8ee99f0d-bf77-479c-abbc-f9a957b66139" >
+	<sub-flow name="emrplm-isv-s-item-ofusionSub_Flow" doc:id="ae2efd2e-f2f1-4343-a603-6fee069ebea6" >
+		<choice doc:name="Choice" doc:id="6836ffcb-fe22-47b4-9c94-23354c18567b" >
 			<when expression="attributes.statusCode ==201">
-				<logger level="INFO" doc:name="printingResponseOfSendFile" doc:id="b20a099d-b7a0-4a5d-9308-0d6e466474f1" message="payload after sending the file to location::::::::::::::::::::::::::#[payload]" />
-				<ee:transform doc:name="submitBatchMapping" doc:id="23144261-b518-4394-9d28-2dcf5f24e894">
+				<logger level="INFO" doc:name="printingResponseOfSendFile" doc:id="a0ff2823-32a9-4d17-ae24-4a9a4b6e1c89" message="payload after sending the file to location::::::::::::::::::::::::::#[payload]" />
+				<ee:transform doc:name="submitBatchMapping" doc:id="bad24496-3247-44ec-9340-5a46e38ad040">
 						<ee:message>
 						</ee:message>
 						<ee:variables>
@@ -218,8 +249,8 @@ output application/json
 }]]></ee:set-variable>
 						</ee:variables>
 					</ee:transform>
-				<logger level="INFO" doc:name="printingBatchMappingOutput" doc:id="9ad23992-0fac-4f11-9416-688fb0066afd" message="#[vars.batchdata]" />
-				<http:request method="POST" doc:name="request for Submit batch" doc:id="f2d5ad78-ce4f-43ec-b4f2-01bab5d22517" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/itemBatches" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
+				<logger level="INFO" doc:name="printingBatchMappingOutput" doc:id="f6fffa20-fe4a-4d9c-a376-7f2678841d77" message="#[vars.batchdata]" />
+				<http:request method="POST" doc:name="request for Submit batch" doc:id="4de8fde4-8441-4fc6-bf04-9bc2d558d87d" config-ref="emrplm-isv-s-item-ofusion-get" url="https://fa-erzp-dev3-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/itemBatches" sendCorrelationId="ALWAYS" correlationId="#[correlationId]" responseTimeout="${secure::GET.responseTimeout}">
 						<ee:repeatable-file-store-stream inMemorySize="${secure::GET.memory}" />
 						<http:body><![CDATA[#[vars.batchdata]]]></http:body>
 						<http:headers><![CDATA[#[output application/java
@@ -231,11 +262,11 @@ output application/json
 							<http:success-status-code-validator values="200" />
 						</http:response-validator>
 					</http:request>
-				<logger level="INFO" doc:name="PrintingSubmitBatch" doc:id="414d9238-9826-4d86-8919-7d9d99b07821" message="Response after submitting the batch: #[payload]" />
+				<logger level="INFO" doc:name="PrintingSubmitBatch" doc:id="4e011aed-f3cf-4c38-a85c-200d0c7205cf" message="Response after submitting the batch: #[payload]" />
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="Logger" doc:id="0ec4b6eb-799c-4065-b4d2-bb08801ed06d" message="Target instance is not correct #[payload]" />
-				<raise-error doc:name="Raise error" doc:id="caca979f-5562-40da-963b-7b9758c71a7f" type="ANY" description="file is not created in the location please try again" />
+				<logger level="INFO" doc:name="Logger" doc:id="1d3ecf9e-1eb5-4f93-adf5-b14d37115f27" message="Target instance is not correct #[payload]" />
+				<raise-error doc:name="Raise error" doc:id="e0ffb54f-3951-4473-ac67-67616e4b0822" type="ANY" description="file is not created in the location please try again" />
 			</otherwise>
 		</choice>
 	</sub-flow>
